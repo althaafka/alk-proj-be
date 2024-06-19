@@ -43,7 +43,7 @@ func GetArticles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var articles []models.Article
-	if err := database.DB.Find(&articles).Error; err != nil {
+	if err := database.DB.Order("ID desc").Find(&articles).Error; err != nil {
         helpers.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Server error"})
         return
     }
@@ -75,20 +75,40 @@ func GetArticles(w http.ResponseWriter, r *http.Request) {
 	helpers.RespondWithJSON(w, http.StatusOK, result)
 }
 
-// func GetArticle(w http.ResponseWriter, r *http.Request) {
-// 	if !helpers.ValidateMethod(w, r, "GET") {
-// 		return
-// 	}
+func GetMyArticles(w http.ResponseWriter, r *http.Request) {
+	if !helpers.ValidateMethod(w, r, "GET") {
+		return
+	}
 
-// 	id := r.URL.Query().Get("id")
-// 	var article models.Article
-// 	if err := database.DB.Where("id = ?", id).First(&article).Error; err != nil {
-// 		helpers.RespondWithJSON(w, http.StatusNotFound, map[string]string{"error": "Article not found"})
-// 		return
-// 	}
+	userID, ok := r.Context().Value("userID").(uint)
+	if !ok {
+		helpers.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid user ID"})
+		return
+	}
 
-// 	helpers.RespondWithJSON(w, http.StatusOK, article)
-// }
+	var articles []models.Article
+	if err := database.DB.Where("user_id = ?", userID).Order("ID desc").Find(&articles).Error; err != nil {
+		helpers.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Server error"})
+		return
+	}
+
+	helpers.RespondWithJSON(w, http.StatusOK, articles)
+}
+
+func GetArticle(w http.ResponseWriter, r *http.Request) {
+	if !helpers.ValidateMethod(w, r, "GET") {
+		return
+	}
+
+	id := r.URL.Query().Get("id")
+	var article models.Article
+	if err := database.DB.Where("id = ?", id).First(&article).Error; err != nil {
+		helpers.RespondWithJSON(w, http.StatusNotFound, map[string]string{"error": "Article not found"})
+		return
+	}
+
+	helpers.RespondWithJSON(w, http.StatusOK, article)
+}
 
 func EditArticle(w http.ResponseWriter, r *http.Request) {
 	if !helpers.ValidateMethod(w, r, "PUT") {
