@@ -14,13 +14,20 @@ func CreateArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userID, ok := r.Context().Value("userID").(uint)
+	if !ok {
+		helpers.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid user ID"})
+		return
+	}
+
 	var article models.Article
 	if err := json.NewDecoder(r.Body).Decode(&article); err != nil {
 		helpers.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid request"})
 		return
 	}
-
 	defer r.Body.Close()
+
+	article.UserID = userID
 
 	if err := database.DB.Create(&article).Error; err != nil {
 		helpers.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Server error"})
@@ -88,6 +95,12 @@ func EditArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userID, ok := r.Context().Value("userID").(uint)
+	if !ok {
+        helpers.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid user ID"})
+        return
+    }
+
 	var article models.Article
 	if err := json.NewDecoder(r.Body).Decode(&article); err != nil {
 		helpers.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid request"})
@@ -95,6 +108,17 @@ func EditArticle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	defer r.Body.Close()
+
+	var existingArticle models.Article
+    if err := database.DB.Where("id = ?", article.ID).First(&existingArticle).Error; err != nil {
+        helpers.RespondWithJSON(w, http.StatusNotFound, map[string]string{"error": "Article not found"})
+        return
+    }
+
+    if existingArticle.UserID != userID {
+        helpers.RespondWithJSON(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+        return
+    }
 
 	if err := database.DB.Save(&article).Error; err != nil {
 		helpers.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Server error"})
@@ -109,6 +133,12 @@ func DeleteArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userID, ok := r.Context().Value("userID").(uint)
+	if !ok {
+		helpers.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid user ID"})
+		return
+	}
+
 	id := r.URL.Query().Get("id")
 	var article models.Article
 	if err := database.DB.Where("id = ?", id).First(&article).Error; err != nil {
@@ -116,6 +146,11 @@ func DeleteArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if article.UserID != userID {
+		helpers.RespondWithJSON(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+		return
+	}
+	
 	if err := database.DB.Delete(&article).Error; err != nil {
 		helpers.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Server error"})
 		return
