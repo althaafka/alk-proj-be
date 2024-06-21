@@ -5,6 +5,7 @@ import (
 	"log"
 	"github.com/althaafka/alk-proj-be.git/controllers/usercontroller"
 	"github.com/althaafka/alk-proj-be.git/controllers/articlecontroller"
+	"github.com/althaafka/alk-proj-be.git/controllers/commentcontroller"
 	"github.com/althaafka/alk-proj-be.git/middlewares"
 )
 
@@ -35,6 +36,9 @@ func SetupRouter() {
 	http.Handle("/article/create", corsMiddleware(middlewares.AuthMiddleware(http.HandlerFunc(articlecontroller.CreateArticle))))
     http.Handle("/article/edit", corsMiddleware(middlewares.AuthMiddleware(http.HandlerFunc(articlecontroller.EditArticle))))
 	http.Handle("/article/delete", corsMiddleware(middlewares.AuthMiddleware(http.HandlerFunc(articlecontroller.DeleteArticle))))
+
+	http.Handle("/comment/create", corsMiddleware(middlewares.AuthMiddleware(http.HandlerFunc(commentcontroller.CreateComment))))
+	http.Handle("/comment", corsMiddleware(http.HandlerFunc(commentcontroller.GetComments)))
 
 	log.Println("Server started on localhost:8080")
 	err := http.ListenAndServe(":8080", nil)

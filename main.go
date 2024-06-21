@@ -7,6 +7,5 @@ import (
 
 func main() {
 	database.Connect()
-
 	router.SetupRouter()
 }
