@@ -43,10 +43,22 @@ func GetComments(w http.ResponseWriter, r *http.Request) {
 
     articleID := r.URL.Query().Get("article_id")
     var comments []models.Comment
-    if err := database.DB.Where("article_id = ?", articleID).Find(&comments).Error; err != nil {
+    if err := database.DB.Joins("User").Where("article_id = ?", articleID).Order("created_at ASC").Find(&comments).Error; err != nil {
         helpers.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Server error"})
         return
     }
 
-    helpers.RespondWithJSON(w, http.StatusOK, comments)
+	result := make([]map[string]interface{}, len(comments))
+    for i, comment := range comments {
+        result[i] = map[string]interface{}{
+            "id":        comment.ID,
+            "content":   comment.Content,
+            "username":  comment.User.Username,
+            "article_id": comment.ArticleID,
+            "user_id":   comment.UserID,
+			"created_at": comment.CreatedAt.Format("2006-01-02 15:04:05"),
+        }
+    }
+
+    helpers.RespondWithJSON(w, http.StatusOK, result)
 }

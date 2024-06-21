@@ -62,7 +62,7 @@ func Login(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	token, err := helpers.GenerateToken(existingUser.ID)
+	token, err := helpers.GenerateToken(existingUser.ID, existingUser.Username)
 	if err != nil {
 		helpers.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Server error"})
 		return

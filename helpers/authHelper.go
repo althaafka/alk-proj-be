@@ -7,14 +7,16 @@ import (
 
 type JWTClaim struct {
 	UserID uint
+	username string
 	jwt.StandardClaims
 }
 
-func GenerateToken(userID uint) (string, error) {
+func GenerateToken(userID uint, username string) (string, error) {
 	expTime := time.Now().Add(5 * time.Hour)
 
 	claims := &JWTClaim{
 		UserID: userID,
+		username: username,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expTime.Unix(),
 		},
