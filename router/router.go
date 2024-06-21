@@ -36,6 +36,7 @@ func SetupRouter() {
 	http.Handle("/article/create", corsMiddleware(middlewares.AuthMiddleware(http.HandlerFunc(articlecontroller.CreateArticle))))
     http.Handle("/article/edit", corsMiddleware(middlewares.AuthMiddleware(http.HandlerFunc(articlecontroller.EditArticle))))
 	http.Handle("/article/delete", corsMiddleware(middlewares.AuthMiddleware(http.HandlerFunc(articlecontroller.DeleteArticle))))
+	http.Handle("/article/like", corsMiddleware(middlewares.AuthMiddleware(http.HandlerFunc(articlecontroller.AddLikeToArticle))))
 
 	http.Handle("/comment/create", corsMiddleware(middlewares.AuthMiddleware(http.HandlerFunc(commentcontroller.CreateComment))))
 	http.Handle("/comment", corsMiddleware(http.HandlerFunc(commentcontroller.GetComments)))

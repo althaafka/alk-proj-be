@@ -69,6 +69,7 @@ func GetArticles(w http.ResponseWriter, r *http.Request) {
 			"user_id": article.UserID,
 			"username": user.Username,
 			"email": user.Email,
+			"likes": article.Likes,
 		}
 	}
 
@@ -177,4 +178,38 @@ func DeleteArticle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	helpers.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Article deleted"})
+}
+
+func AddLikeToArticle(w http.ResponseWriter, r *http.Request) {
+	if !helpers.ValidateMethod(w, r, "POST") {
+		return
+	}
+
+	var data map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		helpers.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
+		return
+	}
+	defer r.Body.Close()
+
+	articleID, ok := data["article_id"].(float64)
+	if !ok {
+		helpers.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid article ID"})
+		return
+	}
+
+	var article models.Article
+	if err := database.DB.First(&article, uint(articleID)).Error; err != nil {
+		helpers.RespondWithJSON(w, http.StatusNotFound, map[string]string{"error": "Article not found"})
+		return
+	}
+
+	article.Likes++
+
+	if err := database.DB.Save(&article).Error; err != nil {
+		helpers.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Server error"})
+		return
+	}
+
+	helpers.RespondWithJSON(w, http.StatusOK, article)
 }
