@@ -34,12 +34,15 @@ func SetupRouter() {
 	http.Handle("/article/my", corsMiddleware(middlewares.AuthMiddleware(http.HandlerFunc(articlecontroller.GetMyArticles))))
 	http.Handle("/article", corsMiddleware(middlewares.AuthMiddleware(http.HandlerFunc(articlecontroller.GetArticle))))
 	http.Handle("/article/create", corsMiddleware(middlewares.AuthMiddleware(http.HandlerFunc(articlecontroller.CreateArticle))))
+	http.Handle("/article/create/img", corsMiddleware(middlewares.AuthMiddleware(http.HandlerFunc(articlecontroller.UploadArticlePhoto))))
     http.Handle("/article/edit", corsMiddleware(middlewares.AuthMiddleware(http.HandlerFunc(articlecontroller.EditArticle))))
 	http.Handle("/article/delete", corsMiddleware(middlewares.AuthMiddleware(http.HandlerFunc(articlecontroller.DeleteArticle))))
 	http.Handle("/article/like", corsMiddleware(middlewares.AuthMiddleware(http.HandlerFunc(articlecontroller.AddLikeToArticle))))
 
 	http.Handle("/comment/create", corsMiddleware(middlewares.AuthMiddleware(http.HandlerFunc(commentcontroller.CreateComment))))
 	http.Handle("/comment", corsMiddleware(http.HandlerFunc(commentcontroller.GetComments)))
+
+	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets"))))
 
 	log.Println("Server started on localhost:8080")
 	err := http.ListenAndServe(":8080", nil)

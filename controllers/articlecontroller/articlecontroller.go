@@ -3,6 +3,9 @@ package articlecontroller
 import (
 	"encoding/json"
 	"net/http"
+	"io"
+	"os"
+	"path/filepath"
 
 	"github.com/althaafka/alk-proj-be.git/database"
 	"github.com/althaafka/alk-proj-be.git/helpers"
@@ -70,6 +73,7 @@ func GetArticles(w http.ResponseWriter, r *http.Request) {
 			"username": user.Username,
 			"email": user.Email,
 			"likes": article.Likes,
+			"photo_url": article.PhotoURL,
 		}
 	}
 
@@ -213,3 +217,39 @@ func AddLikeToArticle(w http.ResponseWriter, r *http.Request) {
 
 	helpers.RespondWithJSON(w, http.StatusOK, article)
 }
+
+func UploadArticlePhoto(w http.ResponseWriter, r*http.Request) {
+	if !helpers.ValidateMethod(w,r, "POST"){
+		return
+	}
+
+	err := r.ParseMultipartForm(10 << 20) //Max 10MB
+	if err != nil {
+		helpers.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Failes to parse multipart form"})
+		return
+	}
+
+	file, handler, err := r.FormFile("image")
+	if err != nil {
+		helpers.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Failed to get file"})
+		return
+	}
+	defer file.Close()
+
+	os.MkdirAll("./assets/images", os.ModePerm)
+
+	filePath := filepath.Join("./assets/images/", handler.Filename)
+	dst, err := os.Create(filePath)
+	if err != nil {
+		helpers.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to create file"})
+	}
+	defer dst.Close()
+
+	if _,err := io.Copy(dst, file); err != nil {
+		helpers.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to save file"})
+		return
+	}
+
+	photoUrl := "/assets/images/" + handler.Filename
+	helpers.RespondWithJSON(w, http.StatusOK, map[string]string{"photo_url": photoUrl})
+} 
